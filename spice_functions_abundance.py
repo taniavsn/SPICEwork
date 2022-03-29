@@ -31,6 +31,35 @@ from EMToolKit.instruments.spice import contribution_func_spice
 from EMToolKit.algorithms.simple_reg_dem_wrapper import simple_reg_dem_wrapper
 import EMToolKit.EMToolKit_SPICE as emtk
 
+#Extract the ions and wavelength from the chosen keys
+def extract_ions_wvl(keys):
+    wvl = []
+    ions = []
+    for i in keys:
+        j = i.split(' ')[0] + ' ' + i.split(' ')[1]
+        wvlen = i.split(' ')[2]
+        if (i.split(' ')[0] == 'Ly'):
+            j = 'H I'
+            wvlen = 1025
+            warnings.warn('Line Ly Beta has been set to ion H I')
+            wvl.append(int(wvlen))
+            ions.append(j)
+        elif (i.split(' ')[0] == 'Ly-gamma-CIII'):
+            j = 'C III'
+            wvlen = 977
+            warnings.warn('Line Ly Gamma - CIII has been set to ion C III')
+            wvl.append(int(wvlen))
+            ions.append(j)
+        elif (i.split(' ')[0] == '(STP122)' or i.split(' ')[0] == '(Ref)'):
+            j = i.split(' ')[1] + ' ' + i.split(' ')[2]
+            wvlen = i.split(' ')[3] 
+            wvl.append(int(wvlen))
+            ions.append(j)
+        else : 
+            wvl.append(int(wvlen))
+            ions.append(j)
+    return ions, wvl 
+
 
 #Plot the colorbar : coronal abundance => colors, intensity => dark/light
 def clrbar_ab_int(dimx=256, dimy=32):
@@ -51,6 +80,22 @@ def chi2_mins(list_chi2):
         for j in range(chi2s.shape[1]):
             chi_mins[i,j] = min(list(chi2s[i,j]))
             chi_mins_idx[i,j] = list(chi2s[i,j]).index(min(list(chi2s[i,j])))
+    ##PLot the chi2 min values
+    fig_chi = plt.figure(constrained_layout=True)
+    spec = fig_chi.add_gridspec(ncols = 2, nrows = 1, width_ratios = [0.2, 0.8])
+    ax1 = fig_chi.add_subplot(spec[:,0])
+    ax2 = fig_chi.add_subplot(spec[0,1])
+    
+    # color bar param
+    ax1.set(ylabel = 'chi2 value (normalized)')
+    ax2.imshow((chi_mins/chi_mins[:,200:630].max()),
+                   vmax= 1, extent=[0,160*2.5,125,725])   
+    #4:1 extent=[0,160*2.5,125,725]
+    ax2.set(title = 'Chi2 mins')
+    clrbr = plt.colorbar()
+    ax1.imshow(clrbr)
+    plt.show()
+
     return chi_mins, chi_mins_idx
 
 def plot_abundances_intensity(keys, tot_fit_amps, chi_mins, chi_mins_idx, cropx=125, cropy=725):   
@@ -104,7 +149,7 @@ def fit_lines_SPICE(filename, data_path = "SPICE_files"):
     tot_errors = []
 
     for key in tqdm_notebook(keys) :
-        raster = keys[key]
+        raster = exposure[key]
         print(raster)
         #mask and filter
         dat_arr = raster.data
@@ -260,8 +305,9 @@ def fit_lines_SPICE(filename, data_path = "SPICE_files"):
     return keys, tot_fit_amps, tot_errors
 
 
-def fit_contribution_DEM_abundance(filename, ions, wvl, data_path="SPICE_files"):
+def fit_contribution_DEM_abundance(filename, data_path="SPICE_files"):
     [keys, tot_fit_amps, tot_errors] = fit_lines_SPICE(filename)
+    [ions, wvl] = extract_ions_wvl(keys)
     file = os.path.join(data_path, filename)
     ##Contribution Functions 
     [trespsCorona, logtsCorona, exptimes] = contribution_func_spice('sun_coronal_2012_schmelz', ions, wvl)
