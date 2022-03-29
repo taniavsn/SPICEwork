@@ -1,9 +1,9 @@
 # SPICEwork
-Code and functions for SolO SPICE data analysis
+Code and functions for SolO SPICE data analysis. Relies on EMToolKit by Joseph Plowman, and other packages.
 
 
 Work in progress.
-Contents : 
+# Contents : 
 -Line fitting algorithm based on specutils functions
 -Intensity summing algorithm 
 -Contribution functions based on fiasco functions
