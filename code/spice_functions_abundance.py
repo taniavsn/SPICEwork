@@ -2,7 +2,7 @@
 """
 Created on Mon Feb 14 15:13:41 2022
 
-@author: tania
+@author: Tania Varesano
 """
 from sunraster.instr.spice import read_spice_l2_fits
 import numpy as np
