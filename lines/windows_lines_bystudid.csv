@@ -1,0 +1,149 @@
+,study_id,line,spec_window_min,spec_window_max
+0,rastersid0,O III 703 / Mg IX 706 - SH (lambda bin 2),70.05,70.83
+0,rastersid0,O III 703 / Mg IX 706 - LH,70.05,70.83
+0,rastersid0,O II 718 - Peak (spectral bin 2),71.63,72.1
+0,rastersid0,S IV 750/ Mg IX (spectral bin 2),74.79,75.26
+0,rastersid0,N IV 765 - SH,76.06,77.44
+0,rastersid0,N IV 765 - LH,76.06,77.44
+0,rastersid0,Ne VIII 770 - SH,76.06,77.44
+0,rastersid0,Ne VIII 770 - LH,76.06,77.44
+0,rastersid0,S V 786 / O IV 787 - SH (Lambda bin 2),78.36,79.12
+0,rastersid0,S V 786 / O IV 787 - LH (lambda bin 2),78.36,79.12
+0,rastersid0,N III 991 - SH (lambda bin 2),98.77,99.36
+0,rastersid0,N III 991 - LH (lambda bin 2),98.77,99.36
+0,rastersid0,Ly Beta 1025 - SH,102.29,102.87
+0,rastersid0,Ly Beta 1025 - LH,102.29,102.87
+0,rastersid0,O VI 1032 - SH,102.91,103.49
+0,rastersid0,O VI 1032 - LH,102.91,103.49
+2,rastersid2,Mg IX 706 - Peak,70.42,70.89
+2,rastersid2,N IV 765 - Peak,76.28,76.75
+2,rastersid2,Ne VIII 770 - Peak,76.81,77.29
+2,rastersid2,S V 786 / O IV 787 - Peak,78.49,78.97
+2,rastersid2,Ly-gamma-CIII group (2/3),97.34,97.94
+2,rastersid2,Ly-gamma-CIII group (3/3),97.34,97.94
+2,rastersid2,Ly Beta 1025 - SH,102.29,102.87
+2,rastersid2,Ly Beta 1025 - LH,102.29,102.87
+2,rastersid2,O VI 1032 - Peak,103.04,103.36
+4,rastersid4,(STP122) O III 703 / Mg IX 706 - SH,70.09,70.88
+4,rastersid4,(STP122) O III 703 / Mg IX 706 - LH,70.09,70.88
+4,rastersid4,(STP122) S IV 750 - Peak,74.83,75.31
+4,rastersid4,(STP122) N IV 765 - Peak,76.32,76.8
+4,rastersid4,(STP122) Ne VIII 770 - Peak,76.86,77.34
+4,rastersid4,(STP122) S V 786 / O IV 787 - Peak,78.54,79.02
+4,rastersid4,(STP122) N III 991 - SH,98.82,99.41
+4,rastersid4,(STP122) N III 991 - LH,98.82,99.41
+5,rastersid5,O III 703 / Mg IX 706 - SH,70.03,70.81
+5,rastersid5,O III 703 / Mg IX 706 - LH,70.03,70.81
+5,rastersid5,S IV 750 - Peak,74.76,75.24
+5,rastersid5,Ne VIII 770 / Mg VIII 772 - SH,76.73,77.45
+5,rastersid5,Ne VIII 780 / Mg VIII 782 - SH,77.74,78.51
+5,rastersid5,Ne VIII 780 / Mg VIII 782 - LH,77.74,78.51
+5,rastersid5,S V 786 / O IV 787 - Extend,78.42,78.98
+5,rastersid5,Ne VIII 770 / Mg VIII 772 - LH,76.73,77.45
+5,rastersid5,Ne VIII 770 / Mg VIII 772 - LW,76.73,77.45
+5,rastersid5,S V 786 / O IV 787 - LW,78.42,78.98
+6,rastersid6,O III 703 / Mg IX 706 - SH,70.04,70.83
+6,rastersid6,O III 703 / Mg IX 706 - LH,70.04,70.83
+6,rastersid6,O II 718 - Peak (spectral bin 2),71.63,72.1
+6,rastersid6,(Ref) O V 760 - SH,75.61,76.4
+6,rastersid6,(Ref) O V 760 - LH,75.61,76.4
+6,rastersid6,N IV 765 - Peak,76.28,76.75
+6,rastersid6,Ne VIII 770 - Peak,76.82,77.29
+6,rastersid6,S V 786 / O IV 787 - SH (Lambda bin 2),78.36,79.12
+6,rastersid6,S V 786 / O IV 787 - LH (lambda bin 2),78.36,79.12
+6,rastersid6,C III 977 - Peak,97.56,97.89
+6,rastersid6,Ly Beta 1025 - Peak,102.42,102.73
+6,rastersid6,O VI 1032 - Peak,103.05,103.36
+8,rastersid8,O III 703 / Mg IX 706 - SH (lambda bin 2),70.05,70.83
+8,rastersid8,O III 703 / Mg IX 706 - LH,70.05,70.83
+8,rastersid8,O II 718 - Peak (spectral bin 2),71.63,72.1
+8,rastersid8,S IV 750/ Mg IX (spectral bin 2),74.79,75.26
+8,rastersid8,Ne VIII 770 - SH,76.67,77.43
+8,rastersid8,Ne VIII 770 - LH,76.67,77.43
+8,rastersid8,S V 786 / O IV 787 - SH (Lambda bin 2),78.36,79.12
+8,rastersid8,S V 786 / O IV 787 - LH (lambda bin 2),78.36,79.12
+8,rastersid8,Ly-gamma-CIII group bin (1/4),96.9,98.04
+8,rastersid8,Ly-gamma-CIII group bin (2/4),96.9,98.04
+8,rastersid8,Ly-gamma-CIII group bin (3/4),96.9,98.04
+8,rastersid8,Ly-gamma-CIII group bin (4/4),96.9,98.04
+8,rastersid8,N III 991 - SH (lambda bin 2),98.77,99.36
+8,rastersid8,N III 991 - LH (lambda bin 2),98.77,99.36
+8,rastersid8,O VI 1032 - SH,102.91,103.49
+8,rastersid8,O VI 1032 - LH,102.91,103.49
+9,rastersid9,O III 703 / Mg IX 706 - SH (lambda bin 2),70.05,70.83
+9,rastersid9,O III 703 / Mg IX 706 - LH,70.05,70.83
+9,rastersid9,O II 718 - Peak (spectral bin 2),71.63,72.1
+9,rastersid9,S IV 750/ Mg IX (spectral bin 2),74.79,75.26
+9,rastersid9,Ne VIII 770 - SH,76.67,77.43
+9,rastersid9,Ne VIII 770 - LH,76.67,77.43
+9,rastersid9,S V 786 / O IV 787 - SH (Lambda bin 2),78.36,79.12
+9,rastersid9,S V 786 / O IV 787 - LH (lambda bin 2),78.36,79.12
+9,rastersid9,Ly-gamma-CIII group bin (1/4),96.9,98.04
+9,rastersid9,Ly-gamma-CIII group bin (2/4),96.9,98.04
+9,rastersid9,Ly-gamma-CIII group bin (3/4),96.9,98.04
+9,rastersid9,Ly-gamma-CIII group bin (4/4),96.9,98.04
+9,rastersid9,N III 991 - SH (lambda bin 2),98.77,99.36
+9,rastersid9,N III 991 - LH (lambda bin 2),98.77,99.36
+9,rastersid9,O VI 1032 - SH,102.91,103.49
+9,rastersid9,O VI 1032 - LH,102.91,103.49
+10,rastersid10,O III 703 / Mg IX 706 - SH,70.04,70.83
+10,rastersid10,O III 703 / Mg IX 706 - LH,70.04,70.83
+10,rastersid10,S IV 750 - Peak,74.78,75.26
+10,rastersid10,N IV 765 - Peak,76.28,76.75
+10,rastersid10,Ne VIII 770 - Peak,76.81,77.29
+10,rastersid10,S V 786 / O IV 787 - Extend,78.44,79
+10,rastersid10,S V 786 / O IV 787 - LW,78.44,79
+10,rastersid10,N III 991 - LH,98.76,99.29
+10,rastersid10,N III 991 - SH,98.76,99.29
+10,rastersid10,N III 991 - SW,98.76,99.29
+11,rastersid11,O III 703 / Mg IX 706 - SH,70.03,70.81
+11,rastersid11,O III 703 / Mg IX 706 - LH,70.03,70.81
+11,rastersid11,S IV 750 - Peak,74.76,75.24
+11,rastersid11,N IV 765 - Peak,76.26,76.73
+11,rastersid11,Ne VIII 770 - Peak,76.79,77.27
+11,rastersid11,S V 786 / O IV 787 - Extend,78.42,78.98
+11,rastersid11,S V 786 / O IV 787 - LW,78.42,78.98
+11,rastersid11,N III 991 - LH,98.75,99.28
+11,rastersid11,N III 991 - SH,98.75,99.28
+11,rastersid11,N III 991 - SW,98.75,99.28
+12,rastersid12,O II 718 - Peak,71.62,72.1
+12,rastersid12,N IV 765 - Peak,76.28,76.75
+12,rastersid12,Ne VIII 770 - Peak,76.81,77.29
+12,rastersid12,S V 786 / O IV 787 - Peak,78.49,78.97
+12,rastersid12,C III 977 - Peak,97.56,97.9
+12,rastersid12,Ly Beta 1025 - SH,102.28,102.87
+12,rastersid12,Ly Beta 1025 - LH,102.28,102.87
+12,rastersid12,O VI 1032 - Peak,103.04,103.36
+15,rastersid15,O III 703 / Mg IX 706 - SH,70.04,70.83
+15,rastersid15,O III 703 / Mg IX 706 - LH,70.04,70.83
+15,rastersid15,S IV 750 - Peak,74.78,75.26
+15,rastersid15,N IV 765 - Peak,76.28,76.75
+15,rastersid15,Ne VIII 770 - Peak,76.81,77.29
+15,rastersid15,S V 786 / O IV 787 - Extend,78.44,79
+15,rastersid15,S V 786 / O IV 787 - LW,78.44,79
+15,rastersid15,N III 991 - LH,98.76,99.29
+15,rastersid15,N III 991 - SH,98.76,99.29
+15,rastersid15,N III 991 - SW,98.76,99.29
+16,rastersid16,O III 703 / Mg IX 706 - SH,70.05,70.84
+16,rastersid16,O III 703 / Mg IX 706 - LH,70.05,70.84
+16,rastersid16,S IV 750 - Peak,74.79,75.27
+16,rastersid16,N IV 765 - Peak,76.29,76.76
+16,rastersid16,Ne VIII 770 - Peak,76.82,77.3
+16,rastersid16,S V 786 / O IV 787 - Extend,78.45,79.01
+16,rastersid16,S V 786 / O IV 787 - LW,78.45,79.01
+16,rastersid16,N III 991 - LH,98.78,99.31
+16,rastersid16,N III 991 - SH,98.78,99.31
+16,rastersid16,N III 991 - SW,98.78,99.31
+17,rastersid17,(STP122) O III 703 / Mg IX 706 - SH,70.09,70.88
+17,rastersid17,(STP122) O III 703 / Mg IX 706 - LH,70.09,70.88
+17,rastersid17,(STP122) Ne VIII 770 - Peak,76.86,77.34
+17,rastersid17,(STP122) S V 786 / O IV 787 - Peak,78.54,79.02
+17,rastersid17,(STP122) O VI 1032 - Peak,103.09,103.41
+18,rastersid18,O II 718 - Peak,71.63,72.11
+18,rastersid18,N IV 765 - Peak,76.29,76.76
+18,rastersid18,Ne VIII 770 - Peak,76.82,77.3
+18,rastersid18,S V 786 / O IV 787 - Peak,78.5,78.98
+18,rastersid18,C III 977 - Peak,97.57,97.91
+18,rastersid18,Ly Beta 1025 - SH,102.3,102.89
+18,rastersid18,Ly Beta 1025 - LH,102.3,102.89
+18,rastersid18,O VI 1032 - Peak,103.06,103.38
