@@ -83,8 +83,7 @@ def chi2_mins(list_chi2):
             chi_mins_idx[i,j] = list(chi2s[i,j]).index(min(list(chi2s[i,j])))
     ##PLot the chi2 min values
     plt.figure(constrained_layout=True)
-    plt.imshow((chi_mins/chi_mins[200:630,:].max()),
-                   vmax= 1, extent=[0,160*2.5,125,725])   
+    plt.imshow(chi_mins,vmax= np.nanquantile(chi_mins,0.9), extent=[0,160*2.5,125,725])   
     clrbr = plt.colorbar()
     clrbr.set_label('Min chi2 value')
     plt.show()
@@ -93,7 +92,7 @@ def chi2_mins(list_chi2):
 
 def plot_abundances_intensity(keys, tot_fit_amps, chi_mins, chi_mins_idx, cropx=125, cropy=725):   
     cb_img = clrbar_ab_int()
-    plt.figure(figsize=[15,15])
+    plt.figure(figsize=[20,6])
     gfac=1/2.2
     clrimg = np.zeros([chi_mins.shape[0], chi_mins.shape[1], 3])
     gimg = np.ones(chi_mins_idx.shape)
@@ -107,10 +106,10 @@ def plot_abundances_intensity(keys, tot_fit_amps, chi_mins, chi_mins_idx, cropx=
         clrimg[:,:,0] = rimg*np.clip(tot_fit_amps[lines], 0, val)/val
         clrimg[:,:,1] = gimg*np.clip(tot_fit_amps[lines], 0, val)/val
         clrimg[:,:,2] = bimg*np.clip(tot_fit_amps[lines], 0, val)/val
-        plt.subplot(4,4,i+2)
+        plt.subplot(1,5,i+2)
         plt.imshow(clrimg[cropx:cropy,:,:]**gfac,extent=[0,160*2.5,cropx,cropy])   #4:1 extent=[0,160*2.5,125,725]
-        plt.title('RGB DEM Plot - '+str(keys[lines]))
-    plt.subplot(4,4,1)
+        plt.title(str(keys[lines]))
+    plt.subplot(1,5,1)
     locsx, labelsx = plt.xticks()
     locsy, labelsy = plt.yticks()
     labelsx, locsx = [0, 0.5, 1], np.linspace(0,31,3)
@@ -121,8 +120,8 @@ def plot_abundances_intensity(keys, tot_fit_amps, chi_mins, chi_mins_idx, cropx=
     plt.show()
     
     
-def fit_lines_SPICE(filename, data_path = "SPICE_files"):
-
+def fit_lines_SPICE(filename, data_path = "."):
+    data_path = input('Data path ? ')
     file = os.path.join(data_path, filename)
 
     #Get the spectrum of a particular line
@@ -203,134 +202,70 @@ def fit_lines_SPICE(filename, data_path = "SPICE_files"):
         tot_summean.append(intensity_summean)
     
     ##plot intensity and error maps
-    if nbr_keys == 3 :   
-        ################   Intensities
-        fig = plt.figure(figsize=(12, 9), constrained_layout=True)
-        
-        grid = AxesGrid(fig, 111,
-                        nrows_ncols=(1, 3),
-                        axes_pad=0.05,
-                        cbar_mode='single',
-                        cbar_location='right',
-                        cbar_pad=0.1)
-        
-        for i in range(len(keys)):
-            grid[i].set_axis_off()
-            im = grid[i].imshow(tot_fit_amps[i]/np.quantile(tot_fit_amps[i], 0.92),extent=[0,160*2.5,125,725],cmap='gist_heat',
-                                vmin=0, vmax=1)
-            grid[i].set(title = str(keys[i]))
-        
-        cbar = grid[i].cax.colorbar(im)
-        cbar = grid.cbar_axes[0].colorbar(im)
-        cbar.ax.set_ylabel('Normalized intensity')
-        plt.suptitle('Intensities')
-        plt.show()
-        
-        ####################   Errors
-        fig = plt.figure(figsize=(12, 9), constrained_layout=True)
-        grid = AxesGrid(fig, 111,
-                        nrows_ncols=(1, 3),
-                        axes_pad=0.05,
-                        cbar_mode='single',
-                        cbar_location='right',
-                        cbar_pad=0.1)
-        
-        for i in range(len(keys)):
-            grid[i].set_axis_off()
-            im = grid[i].imshow(tot_errors[i]/np.quantile(tot_errors[i],0.92),extent=[0,160*2.5,125,725],cmap='viridis',
-                                vmin=0, vmax=1)
-            grid[i].set(title = str(keys[i]))
-        
-        cbar = grid[i].cax.colorbar(im)
-        cbar = grid.cbar_axes[0].colorbar(im)
-        cbar.ax.set_ylabel('Normalized error')
-        plt.suptitle('Estimated errors of the fit')
-        plt.show()
-        
-        ########## SNR
-        fig = plt.figure(figsize=(12, 9), constrained_layout=True)
-        grid = AxesGrid(fig, 111,
-                        nrows_ncols=(1, 3),
-                        axes_pad=0.05,
-                        cbar_mode='single',
-                        cbar_location='right',
-                        cbar_pad=0.1)
-        
-        for i in range(len(keys)):
-            grid[i].set_axis_off()
-            im = grid[i].imshow(tot_fit_amps[i]/tot_errors[i],extent=[0,160*2.5,125,725],cmap='plasma',
-                                vmin=0, vmax=np.quantile(tot_fit_amps[i]/tot_errors[i], 0.92))
-            grid[i].set(title = str(keys[i]))
-        
-        cbar = grid[i].cax.colorbar(im)
-        cbar = grid.cbar_axes[0].colorbar(im)
-        cbar.ax.set_ylabel('SNR value')
-        plt.suptitle('Signal to noise ratio')
-        plt.show()
-        
-    else :
-        fig = plt.figure(figsize=(12, 9), constrained_layout=True)
-        
-        grid = AxesGrid(fig, 111,
-                        nrows_ncols=(1, 4),
-                        axes_pad=0.05,
-                        cbar_mode='single',
-                        cbar_location='right',
-                        cbar_pad=0.1)
-        
-        for i in range(len(keys)):
-            grid[i].set_axis_off()
-            im = grid[i].imshow(tot_fit_amps[i]/np.quantile(tot_fit_amps[i], 0.92),extent=[0,160*2.5,125,725],cmap='gist_heat',
-                                vmin=0, vmax=1)
-            grid[i].set(title = str(keys[i]))
-        
-        cbar = grid[i].cax.colorbar(im)
-        cbar = grid.cbar_axes[0].colorbar(im)
-        cbar.ax.set_ylabel('Normalized intensity')
-        plt.suptitle('Intensities')
-        plt.show()
-        
-        ####################   Errors
-        fig = plt.figure(figsize=(12, 9), constrained_layout=True)
-        grid = AxesGrid(fig, 111,
-                        nrows_ncols=(1, 4),
-                        axes_pad=0.05,
-                        cbar_mode='single',
-                        cbar_location='right',
-                        cbar_pad=0.1)
-        
-        for i in range(len(keys)):
-            grid[i].set_axis_off()
-            im = grid[i].imshow(tot_errors[i]/np.quantile(tot_errors[i],0.92),extent=[0,160*2.5,125,725],cmap='viridis',
-                                vmin=0, vmax=1)
-            grid[i].set(title = str(keys[i]))
-        
-        cbar = grid[i].cax.colorbar(im)
-        cbar = grid.cbar_axes[0].colorbar(im)
-        cbar.ax.set_ylabel('Normalized error')
-        plt.suptitle('Estimated errors of the fit')
-        plt.show()
-        
-        ########## SNR
-        fig = plt.figure(figsize=(12, 9), constrained_layout=True)
-        grid = AxesGrid(fig, 111,
-                        nrows_ncols=(1, 4),
-                        axes_pad=0.05,
-                        cbar_mode='single',
-                        cbar_location='right',
-                        cbar_pad=0.1)
-        
-        for i in range(len(keys)):
-            grid[i].set_axis_off()
-            im = grid[i].imshow(tot_fit_amps[i]/tot_errors[i],extent=[0,160*2.5,125,725],cmap='plasma',
-                                vmin=0, vmax=np.quantile(tot_fit_amps[i]/tot_errors[i], 0.92))
-            grid[i].set(title = str(keys[i]))
-        
-        cbar = grid[i].cax.colorbar(im)
-        cbar = grid.cbar_axes[0].colorbar(im)
-        cbar.ax.set_ylabel('SNR value')
-        plt.suptitle('Signal to noise ratio')
-        plt.show()
+
+    fig = plt.figure(figsize=(12, 6), constrained_layout=True)
+    
+    grid = AxesGrid(fig, 111,
+                    nrows_ncols=(1, 4),
+                    axes_pad=0.05,
+                    cbar_mode='single',
+                    cbar_location='right',
+                    cbar_pad=0.1)
+    
+    for i in range(len(keys)):
+        #grid[i].set_axis_off()
+        im = grid[i].imshow(tot_fit_amps[i]/np.quantile(tot_fit_amps[i], 0.92),
+                            extent=[0,160*2.5,125,725],cmap='gist_heat',
+                            vmin=0, vmax=1)
+        grid[i].set(title = str(keys[i]))
+    
+    cbar = grid[i].cax.colorbar(im)
+    cbar = grid.cbar_axes[0].colorbar(im)
+    cbar.ax.set_ylabel('Normalized intensity')
+    plt.suptitle('Intensities')
+    plt.show()
+    
+    ####################   Errors
+    fig = plt.figure(figsize=(12, 6), constrained_layout=True)
+    grid = AxesGrid(fig, 111,
+                    nrows_ncols=(1, 4),
+                    axes_pad=0.05,
+                    cbar_mode='single',
+                    cbar_location='right',
+                    cbar_pad=0.1)
+    
+    for i in range(len(keys)):
+        #grid[i].set_axis_off()
+        im = grid[i].imshow(tot_errors[i]/np.quantile(tot_errors[i],0.92),extent=[0,160*2.5,125,725],cmap='viridis',
+                            vmin=0, vmax=1)
+        grid[i].set(title = str(keys[i]))
+    
+    cbar = grid[i].cax.colorbar(im)
+    cbar = grid.cbar_axes[0].colorbar(im)
+    cbar.ax.set_ylabel('Normalized error')
+    plt.suptitle('Estimated errors of the fit')
+    plt.show()
+    
+    ########## SNR
+    fig = plt.figure(figsize=(12, 6), constrained_layout=True)
+    grid = AxesGrid(fig, 111,
+                    nrows_ncols=(1, 4),
+                    axes_pad=0.05,
+                    cbar_mode='single',
+                    cbar_location='right',
+                    cbar_pad=0.1)
+    
+    for i in range(len(keys)):
+        #grid[i].set_axis_off()
+        im = grid[i].imshow(tot_fit_amps[i]/tot_errors[i],extent=[0,160*2.5,125,725],cmap='plasma',
+                            vmin=0, vmax=np.quantile(tot_fit_amps[i]/tot_errors[i], 0.92))
+        grid[i].set(title = str(keys[i]))
+    
+    cbar = grid[i].cax.colorbar(im)
+    cbar = grid.cbar_axes[0].colorbar(im)
+    cbar.ax.set_ylabel('SNR value')
+    plt.suptitle('Signal to noise ratio')
+    plt.show()
      
 
     ##save the amplitudes and the errors
@@ -341,11 +276,11 @@ def fit_lines_SPICE(filename, data_path = "SPICE_files"):
     with open(file_errs, 'wb') as ferr:
         pickle.dump(tot_errors, ferr)
         
-    return keys, tot_fit_amps, tot_errors
+    return data_path, keys, tot_fit_amps, tot_errors
 
 
-def fit_contribution_DEM_abundance(filename, data_path="SPICE_files"):
-    [keys, tot_fit_amps, tot_errors] = fit_lines_SPICE(filename)
+def fit_contribution_DEM_abundance(filename, data_path = '.'):
+    [data_path, keys, tot_fit_amps, tot_errors] = fit_lines_SPICE(filename)
     [ions, wvl] = extract_ions_wvl(keys)
     file = os.path.join(data_path, filename)
     ##Contribution Functions 
@@ -376,8 +311,6 @@ def fit_contribution_DEM_abundance(filename, data_path="SPICE_files"):
     [chi_mins, chi_mins_idx] = chi2_mins(list_chi2)
     
     ##Plot the coronal abundances / line intensity
-    data_path = "SPICE_files"
-    file = os.path.join(data_path, filename)
     plot_abundances_intensity(keys, tot_fit_amps, chi_mins, chi_mins_idx, cropx=125, cropy=725)
 
     return tot_fit_amps, tot_errors, chi_mins, chi_mins_idx
