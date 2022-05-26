@@ -14,18 +14,46 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 
 
-basename = Path("C:\\Users\\tania\\Documents")
-lines = pd.read_csv(basename / "relevant_lines_studidcsv.csv", sep=",", header=0)
+import pandas as pd
+import numpy as np
+from pathlib import Path
+import math as m
+from os.path import dirname, join as pjoin
+from scipy.io import readsav
+import seaborn as sns
+import matplotlib.pyplot as plt
 
-plt.figsize=[15,15]
+
+basename = Path("C:\\Users\\tania\\Documents")
+lines = pd.read_csv(basename / "Ions_mosaic.csv", sep=",", header=0)
+
+## Plot the ions present in the mosaic files (March 2nd and March 30th), logT vs FIP and logT vs abundance ratio (coronal/photospheric)
+plt.figure(figsize=[7,5])
 for i in range(len(lines)):
-    plt.plot(lines.at[i,'logT'], lines.at[i,'FIP'], marker='x', label = lines.at[i,'Window name'])
-    plt.text(lines.at[i,'logT'], lines.at[i,'FIP'],lines.at[i,'ion'], fontsize=8)
+    plt.plot(lines.at[i,'logT'], lines.at[i,'FIP'], marker='x', label = str(lines.at[i,'ion']))
+    if i==4 :
+        plt.annotate(' ',(lines.at[i,'logT'], lines.at[i,'Ab ratio']))
+    elif i==11 :
+        plt.annotate(str(lines.at[i,'ion'])+ ' - '+str(lines.at[i,'wvl']),(lines.at[i,'logT'], lines.at[i,'FIP']), 
+                     textcoords="offset points", xytext=(2,5),ha='right',fontsize=9)
+    else : 
+        plt.annotate(str(lines.at[i,'ion'])+ ' - '+str(lines.at[i,'wvl']),
+                 (lines.at[i,'logT'], lines.at[i,'FIP']), textcoords="offset points", xytext=(2,5),ha='center',fontsize=9)
 plt.title('log(T) vs FIPs'), plt.xlabel('log(T)'), plt.ylabel('FIP'), plt.grid(True)
 plt.show()
+plt.figure(figsize=[9,7])
 for i in range(len(lines)):
-    plt.plot(lines.at[i,'logT'], lines.at[i,'Ab ratio'], marker='+', label = lines.at[i,'Window name'])
-    plt.text(lines.at[i,'logT'], lines.at[i,'Ab ratio'],lines.at[i,'ion'], fontsize=8)
+    plt.plot(lines.at[i,'logT'], lines.at[i,'Ab ratio'], marker='+', label = lines.at[i,'ion'])
+    if i==0 :
+        plt.annotate(str(lines.at[i,'ion'])+ ' - '+str(lines.at[i,'wvl']),
+                 (lines.at[i,'logT'], lines.at[i,'Ab ratio']), textcoords="offset points", xytext=(2,5),
+                 ha='right',fontsize=9)
+    elif i==4 :
+        plt.annotate(' ',(lines.at[i,'logT'], lines.at[i,'Ab ratio']), textcoords="offset points", xytext=(2,5),ha='right',fontsize=9)
+    else :
+        plt.annotate(str(lines.at[i,'ion'])+ ' - '+str(lines.at[i,'wvl']),
+                 (lines.at[i,'logT'], lines.at[i,'Ab ratio']), textcoords="offset points", xytext=(2,5),ha='center',fontsize=9)
+    #plt.text(lines.at[i,'logT'], lines.at[i,'Ab ratio'],str(lines.at[i,'ion'])+ ' - '+str(lines.at[i,'wvl']), fontsize=7)
 plt.title('log(T) vs abundance ratio'), plt.xlabel('log(T)'), plt.ylabel('abundance ratio (coronal/photo)'), plt.grid(True)
 plt.show()
 
@@ -100,13 +128,4 @@ plt.title('log(T) vs abundance ratio'), plt.xlabel('log(T)'), plt.ylabel('abunda
 plt.grid(True)
 plt.show()
 
-#%%
-
-# with plt.xkcd():
-#     fig1 = plt.figure()
-#     for i in range(len(lines)):
-#         plt.plot(lines.at[i,'logT'], lines.at[i,'FIP'], marker='o', label = lines.at[i,'Window name'])
-#         plt.text(lines.at[i,'logT'], lines.at[i,'FIP'],lines.at[i,'ion'], fontsize=8)
-#     plt.title('log(T) vs FIPs'), plt.xlabel('log(T)'), plt.ylabel('FIP'), plt.grid(True)
-#     plt.show()
     
