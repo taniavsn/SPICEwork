@@ -12,3 +12,4 @@ Work in progress.
 
 -DEM and abundance maps algorithms
 
+-FIP bias : 2LR method, DEM inversion
