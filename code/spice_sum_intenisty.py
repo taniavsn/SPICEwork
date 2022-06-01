@@ -6,11 +6,6 @@ Created on Mon Apr  4 15:49:06 2022
 
 from sunraster.instr.spice import read_spice_l2_fits
 import numpy as np
-import os.path
-import matplotlib.pyplot as plt
-
-from astropy.modeling import models, fitting
-from specutils.fitting import estimate_line_parameters
 from astropy import units as u
 
 from tqdm.notebook import tqdm_notebook
@@ -18,15 +13,8 @@ import warnings
 warnings.filterwarnings("ignore") 
 
 from scipy.ndimage import median_filter
-from astropy.nddata import StdDevUncertainty
-import pickle
-
-from specutils.fitting import fit_lines
-from specutils.spectra import Spectrum1D
 
 def sum_intensity_SPICE(file):
-    
-    bin_facs = np.array([1, 2, 1])
 
     def substract_min_cube(cube):
         det_plane_min = np.nanmin(cube,axis=0)
@@ -41,23 +29,15 @@ def sum_intensity_SPICE(file):
     #read l2 file
     exposure = read_spice_l2_fits(file,memmap=False)
     #Print all the different lines present in the file and remove the duplicata
-    keys = list(exposure.keys())
-    for x in keys : 
-        if 'LH' in x : keys.remove(x)
-        elif 'S V' and 'Extend'in x : keys.remove(x)
-    print(keys)
-    
-    # Define parameters of source, detector, and transformation: listed in the SPICE paper
-    pxsz_mu = 18
-    platescale_x = pxsz_mu/1.1 # Micron per arcsecond
-    platescale_y = pxsz_mu/1.1 # Micron per arcsecond
-    platescale_l = pxsz_mu/0.09 # Micron per Angstrom
-
-    #set the errors parameters
+    keys = ['O III 703 / Mg IX 706 - SH', 'S IV 750/ Mg IX (spectral bin 2)', 'N IV 765 - Peak', 'Ne VIII 770 / Mg VIII 772 - SH',
+        'S V 786 / O IV 787 - LW', 'N III 991 - SH', 'O VI 1032 - Peak']
     shotnoise_fac = 0.025*np.sqrt(10)
     noisefloor = 0.07
+    tot_sum_amps = []
+    tot_sum_errs = [] 
     
     for key in keys :
+        print(key)
         raster = exposure[key]
         if '82-' in file :
             print("crop 82")
@@ -66,93 +46,145 @@ def sum_intensity_SPICE(file):
         else :
             print('Raster shape : ',exposure[key].data.shape)
             raster = exposure[key][:,:,100:711,:]
-        
         cube = raster[0].data.transpose([2,1,0])
         cube = substract_min_cube(cube)
-        raster = bindown(cube,np.round(np.array(cube.shape)/bin_facs).astype(np.int32))
-        print('Size binned down : ', raster.shape)
-        #mask and filter
-        dat_arr = raster
+        
+        dat_arr = cube
         dat_filt = median_filter(dat_arr,size=3)
         filt_thold = 1.0
         dat_median = np.nanmedian(np.abs(dat_filt))
         dat_mask = (np.isnan(dat_arr) + np.isinf(dat_arr) +
                     (np.abs(dat_arr-dat_filt) > filt_thold*(dat_median+np.abs(dat_filt)))+ (dat_arr < - 0.0)) > 0
     
-        [nx,ny] = raster[0,0,:,:].data.shape
         errors = ((noisefloor**2+np.abs(dat_filt)*shotnoise_fac**2)**0.5).astype('float32')
-    
-        #Create an array of corresponding wavelengths for the gaussian fit
-        x = raster.spectral_axis.to(u.nm)
-    
-        # Arrays to store the fit parameters:
-        errors = ((noisefloor**2+np.abs(dat_filt)*shotnoise_fac**2)**0.5).astype('float32')
-
-        sum_ampsOIII, sum_errOIII = (np.zeros([nx,ny]), ) * 2
-        sum_ampsMgIX, sum_errMgIX = (np.zeros([nx,ny]), ) * 2
-
-        sum_ampsNIV, sum_errNIV = (np.zeros([nx,ny]), ) * 2
-        sum_ampsNe, sum_errNe = (np.zeros([nx,ny]), ) * 2
-        sum_ampsOVI, sum_errOVI = (np.zeros([nx,ny]), ) * 2
-
-        sum_ampsSIV750, sum_errSIV750 = (np.zeros([nx,ny]), ) * 2
-        sum_ampsOIV, sum_errOIV = (np.zeros([nx,ny]), ) * 2
-        sum_ampsSV, sum_errSV = (np.zeros([nx,ny]), ) * 2
-
-        sum_ampsNa, sum_errNa = (np.zeros([nx,ny]), ) * 2
-        sum_ampsNIII, sum_errNIII = (np.zeros([nx,ny]), ) * 2
-    
-        for i in tqdm_notebook(range(0,nx)):
-            for j in range(0,ny):
-                data = raster[0, :, i, j].data*u.W/(u.m**2)/u.sr/u.nm
-                errs = errors[0,:,i,j]
-                mask = dat_mask[0,:,i,j]
-                data[mask] = 0.0*u.W/(u.m**2)/u.sr/u.nm
-                if(np.sum(np.logical_not(mask)) > 5):
-                    dat = data[np.logical_not(mask)].value
-                    wvl = x[np.logical_not(mask)]
-                
-                    if 'O III 703' in key :
+        [nx,ny] = cube.shape[0:2]
+        
+        if key == 'O III 703 / Mg IX 706 - SH' : 
+            sum_ampsOIII = np.zeros([nx,ny])
+            sum_errOIII = np.zeros([nx,ny])
+            sum_ampsMgIX = np.zeros([nx,ny]) 
+            sum_errMgIX = np.zeros([nx,ny])
+            for i in tqdm_notebook(range(0,nx)):
+                for j in range(0,ny):
+                    data = cube[i, j, :]*u.adu
+                    errs = errors[i, j, :] 
+                    mask = dat_mask[i, j, :]
+                    data[mask] = 0.0*u.adu
+                    if(np.sum(np.logical_not(mask)) > 5):        
                         sum_ampsOIII[i][j] = np.nanmean(cube[i,j,19:38]) # O III 703
-                        sum_errOIII[i][j] = np.abs((sum_ampsOIII[i][j]/np.nansum(data[mask==0].value))*np.sqrt(np.nansum((errs[mask==0])**2)))
                         sum_ampsMgIX[i][j] = np.nanmean(cube[i,j,38:]) # Mg 706
+                        sum_errOIII[i][j] = np.abs((sum_ampsOIII[i][j]/np.nansum(data[mask==0].value))*np.sqrt(np.nansum((errs[mask==0])**2)))
                         sum_errMgIX[i][j] = np.abs((sum_ampsMgIX[i][j]/np.nansum(data[mask==0].value))*np.sqrt(np.nansum((errs[mask==0])**2)))
-                    elif 'bin' in key :
-                        sum_ampsSIV750[i][j] = np.nanmean(cube[i,j,12:])
+            tot_sum_amps.append(sum_ampsOIII)
+            tot_sum_amps.append(sum_ampsMgIX)
+            tot_sum_errs.append(sum_errOIII)
+            tot_sum_errs.append(sum_errMgIX)
+            
+        elif key == 'S IV 750/ Mg IX (spectral bin 2)':
+            sum_ampsSIV750 = np.zeros([nx,ny])
+            sum_errSIV750 = np.zeros([nx,ny])
+            for i in tqdm_notebook(range(0,nx)):
+                for j in range(0,ny):
+                    data = cube[i, j, :]*u.adu
+                    errs = errors[i, j, :]
+                    mask = dat_mask[i, j, :]
+                    data[mask] = 0.0*u.adu
+                    if(np.sum(np.logical_not(mask)) > 5):        
+                        sum_ampsSIV750[i][j] = np.nanmean(cube[i,j,:])
                         sum_errSIV750[i][j] = np.abs((sum_ampsSIV750[i][j]/np.nansum(data[mask==0].value))*np.sqrt(np.nansum((errs[mask==0])**2)))
-
-                    elif 'N IV 765' in key :
-                        sum_ampsNIV = np.nanmean(cube[i,j,:])
+            tot_sum_amps.append(sum_ampsSIV750)
+            tot_sum_errs.append(sum_errSIV750)
+    
+        elif key == 'N IV 765 - Peak':
+            sum_ampsNIV = np.zeros([nx,ny])
+            sum_errNIV = np.zeros([nx,ny])
+            for i in tqdm_notebook(range(0,nx)):
+                for j in range(0,ny):
+                    data = cube[i, j, :]*u.adu
+                    errs = errors[i, j, :]
+                    mask = dat_mask[i, j, :]
+                    data[mask] = 0.0*u.adu
+                    if(np.sum(np.logical_not(mask)) > 5):        
+                        sum_ampsNIV[i][j] = np.nanmean(cube[i,j,:])
                         sum_errNIV[i][j] = np.abs((sum_ampsNIV[i][j]/np.nansum(data[mask==0].value))*np.sqrt(np.nansum((errs[mask==0])**2)))
-
-                    elif 'Ne VIII' in key :
-                        sum_ampsNe = np.nanmean(cube[i,j,:])
+            
+            tot_sum_amps.append(sum_ampsNIV)
+            tot_sum_errs.append(sum_errNIV)
+    
+        elif key == 'Ne VIII 770 / Mg VIII 772 - SH':
+            sum_ampsNe = np.zeros([nx,ny])
+            sum_errNe = np.zeros([nx,ny])
+            for i in tqdm_notebook(range(0,nx)):
+                for j in range(0,ny):
+                    data = cube[i, j, :]*u.adu
+                    errs = errors[i, j, :]
+                    mask = dat_mask[i, j, :]
+                    data[mask] = 0.0*u.adu
+                    if(np.sum(np.logical_not(mask)) > 5):        
+                        sum_ampsNe[i][j] = np.nanmean(cube[i,j,:])
                         sum_errNe[i][j] = np.abs((sum_ampsNe[i][j]/np.nansum(data[mask==0].value))*np.sqrt(np.nansum((errs[mask==0])**2)))
-
-
-                    elif 'O VI' in key :
-                        sum_ampsOVI = np.nanmean(cube[i,j,:])
-                        sum_errOVI = np.abs((sum_ampsOVI[i][j]/np.nansum(data[mask==0].value))*np.sqrt(np.nansum((errs[mask==0])**2)))
-
-                    elif 'S V 786' and 'O IV' in key :
+            tot_sum_amps.append(sum_ampsNe)
+            tot_sum_errs.append(sum_errNe)
+    
+        elif key == 'S V 786 / O IV 787 - LW' :
+            sum_ampsOIV  = np.zeros([nx,ny])
+            sum_errOIV = np.zeros([nx,ny])
+            sum_ampsSV  = np.zeros([nx,ny])
+            sum_errSV = np.zeros([nx,ny])
+            for i in tqdm_notebook(range(0,nx)):
+                for j in range(0,ny):
+                    data = cube[i, j, :]*u.adu
+                    errs = errors[i, j, :]
+                    mask = dat_mask[i, j, :]
+                    data[mask] = 0.0*u.adu
+                    if(np.sum(np.logical_not(mask)) > 5):        
                         sum_ampsSV[i][j] = np.nanmean(cube[i,j,:22]) 
-                        sum_errSV = np.abs((sum_ampsSV[i][j]/np.nansum(data[mask==0].value))*np.sqrt(np.nansum((errs[mask==0])**2)))
+                        sum_errSV[i][j] = np.abs((sum_ampsSV[i][j]/np.nansum(data[mask==0].value))*np.sqrt(np.nansum((errs[mask==0])**2)))
                         sum_ampsOIV[i][j] = np.nanmean(cube[i,j,22:])
-                        sum_errOIV = np.abs((sum_ampsOIV[i][j]/np.nansum(data[mask==0].value))*np.sqrt(np.nansum((errs[mask==0])**2)))
-
-                    #N III 991 SH / LH
-                    elif 'N III' in key :
+                        sum_errOIV[i][j] = np.abs((sum_ampsOIV[i][j]/np.nansum(data[mask==0].value))*np.sqrt(np.nansum((errs[mask==0])**2)))
+            tot_sum_amps.append(sum_ampsSV)
+            tot_sum_errs.append(sum_errSV)
+            tot_sum_amps.append(sum_ampsOIV)
+            tot_sum_errs.append(sum_errOIV)
+    
+        elif key == 'N III 991 - SH' :
+            sum_ampsNa  = np.zeros([nx,ny])
+            sum_errNa = np.zeros([nx,ny])
+            sum_ampsNIII = np.zeros([nx,ny])
+            sum_errNIII = np.zeros([nx,ny])
+            for i in tqdm_notebook(range(0,nx)):
+                for j in range(0,ny):
+                    data = cube[i, j, :]*u.adu
+                    errs = errors[i, j, :]
+                    mask = dat_mask[i, j, :]
+                    data[mask] = 0.0*u.adu
+                    if(np.sum(np.logical_not(mask)) > 5): 
                         sum_ampsNa[i][j] = np.nanmean(cube[i,j,:10])
                         sum_errNa[i][j] = np.abs((sum_ampsNa[i][j]/np.nansum(data[mask==0].value))*np.sqrt(np.nansum((errs[mask==0])**2)))
                         sum_ampsNIII[i][j] = np.nanmean(cube[i,j,26:])
-                        sum_errNIII[i][j] = np.abs((sum_ampsNIII[i][j]/np.nansum(data[mask==0].value))*np.sqrt(np.nansum((errs[mask==0])**2)))
+                        sum_errNIII[i][j] = np.abs((sum_ampsNIII[i][j]/np.nansum(data[mask==0].value))*np.sqrt(np.nansum((errs[mask==0])**2)))                    
+            tot_sum_amps.append(sum_ampsNa)
+            tot_sum_errs.append(sum_errNa)
+            tot_sum_amps.append(sum_ampsNIII)
+            tot_sum_errs.append(sum_errNIII)
+    
+        elif key == 'O VI 1032 - Peak' :
+            sum_ampsOVI = np.zeros([nx,ny])
+            sum_errOVI = np.zeros([nx,ny])
+            for i in tqdm_notebook(range(0,nx)):
+                for j in range(0,ny):
+                    data = cube[i, j, :]*u.adu
+                    errs = errors[i, j, :]
+                    mask = dat_mask[i, j, :]
+                    data[mask] = 0.0*u.adu
+                    if(np.sum(np.logical_not(mask)) > 5):
+                        sum_ampsOVI[i][j] = np.nanmean(cube[i,j,:])
+                        sum_errOVI[i][j] = np.abs((sum_ampsOVI[i][j]/np.nansum(data[mask==0].value))*np.sqrt(np.nansum((errs[mask==0])**2)))
+            tot_sum_amps.append(sum_ampsOVI)
+            tot_sum_errs.append(sum_errOVI)
+    
                         
-    tot_sum_amps = [sum_ampsMgIX, sum_ampsOIII, sum_ampsSIV750, sum_ampsNIV, sum_ampsNe, 
-                    sum_ampsSV,sum_ampsOIV,  sum_ampsNa, sum_ampsNIII, sum_ampsOVI]
-        
-    tot_sum_err = [sum_errMgIX, sum_errOIII, sum_errSIV750 , sum_errNIV, sum_errNe, sum_errSV, sum_errOIV, sum_errNa,   sum_errNIII,sum_errOVI ]
-                        
-                        
+    return tot_sum_amps, tot_sum_errs                 
                     
 
     
