@@ -39,7 +39,9 @@ plt.rc('font', family='serif')
 
 
 data_path = "C:\\Users\\tania\\EMToolKit-main\\EMToolKit-main\\mosaic"
-filename = "solo_L2_spice-n-ras_20220302T004014_V03_100663682-000.fits"
+#filename = "solo_L2_spice-n-ras_20220302T004014_V03_100663682-000.fits"
+filename = "solo_L2_spice-n-ras_20220302T091034_V02_100663686-000.fits"
+#filename = "solo_L2_spice-n-ras_20220302T181034_V02_100663690-000.fits"
 file = os.path.join(data_path, filename)
 exposure = read_spice_l2_fits(file,memmap=False)
 keys  = ['O III 703 / Mg IX 706 - SH', 'S IV 750/ Mg IX (spectral bin 2)', 'N IV 765 - Peak', 'Ne VIII 770 / Mg VIII 772 - SH',
@@ -435,6 +437,6 @@ keys = ['O III 703 / Mg IX 706 - SH', 'S IV 750/ Mg IX (spectral bin 2)', 'N IV 
 if __name__ == "__main__":
     res = tqdm.contrib.concurrent.process_map(fit_lines_mosaic2nd, keys)
    
-    totfitfile = 'total_fit_82_adu.json'
+    totfitfile = 'total_fit_86_adu.json'
     with open(totfitfile, 'wb') as famps:
         pickle.dump(res, famps)  

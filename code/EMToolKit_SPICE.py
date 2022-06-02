@@ -12,7 +12,7 @@ from tqdm.notebook import tqdm_notebook as tqdm
 #for em_data, input should be the amplitude fits and the errors from the spectral line fitting
 #amps, errs, should be lists of length n_channels
 
-def em_data_spice(file, keys, amps, errs, logts, tresps, channels=None, defaultValue=1):
+def em_data_spice(file, keys, amps, errs, logts, tresps, channels=None, defaultValue=0.01):
     
     exposure = read_spice_l2_fits(file,memmap=False)
     #keys must be the full list or a part of the list of exposure.keys()
@@ -20,17 +20,14 @@ def em_data_spice(file, keys, amps, errs, logts, tresps, channels=None, defaultV
     tot_err_nonan = []
     tot_amp_nonan = []
     for k in range(len(amps)):
-        
-        A = np.array(amps[k])
-        A = np.nan_to_num(A)
-        A[ A == np.inf] = defaultValue
-        tot_amp_nonan.append(A)
-        
-        B = np.array(errs[k])
-        B[np.isnan(B)] = defaultValue
-        B[ B == np.inf] = defaultValue
-        B[ B == 0] = defaultValue
+        B = np.nan_to_num( np.array(errs[k]), nan = np.nanmax(errs[k]),
+                          posinf=np.nanmax(errs[k]), neginf=np.nanmax(errs[k]))
+        B[ B == 0] = np.nanmax(errs[k])
         tot_err_nonan.append(B)
+        A = np.nan_to_num(np.array(amps[k]), nan = defaultValue, posinf=defaultValue,
+                          neginf=defaultValue)
+        A[ A == 0] = np.min(amps[k])
+        tot_amp_nonan.append(A)
    
     amps = tot_amp_nonan
     errs = tot_err_nonan

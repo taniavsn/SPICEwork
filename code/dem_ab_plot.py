@@ -23,11 +23,10 @@ from mpl_toolkits.axes_grid1 import AxesGrid
 import EMToolKit.EMToolKit_SPICE as emtk
 from EMToolKit.algorithms.simple_reg_dem_wrapper import simple_reg_dem_wrapper
 from ndcube import NDCube, NDCubeSequence, NDCollection
-import astropy.wcs
 plt.rcParams['image.origin'] = 'lower'
 plt.rcParams.update({'font.size': 16}) # Make the fonts in figures big enough for papers
 plt.rcParams.update({'figure.figsize':[15,7]});
-
+from multiprocessing import Pool
 import matplotlib as mlt
 mlt.rc('xtick', labelsize=18)
 mlt.rc('ytick', labelsize=18)
@@ -36,17 +35,29 @@ plt.rc('font', family='serif')
 
 gfac=1/2.2
 data_path = "mosaic"
-#In DEM_abundace, "file" must contain the path, and the extensiom (ex : mosaic\\solo_L2_spice-n-ras_20220302T004014_V03_100663682-000.fits)
-def DEM_abundance(list_file_amps_err):
+#In DEM_abundace, "file" must contain the path, and the extensiom 
+#(ex : mosaic\\solo_L2_spice-n-ras_20220302T004014_V03_100663682-000.fits)
+# list_file_amps == 1 if not binned down, 2 if binned down.
+def DEM_abundance(list_file_amps_err, defVal=0.01):
+    
     file = list_file_amps_err[0]
     amps = list_file_amps_err[1]
     errors = list_file_amps_err[2]
-    keys = ['O III 703 / Mg IX 706 - SH', 'O III 703 / Mg IX 706 - SH','S IV 750/ Mg IX (spectral bin 2)', 'N IV 765 - Peak',
-        'Ne VIII 770 / Mg VIII 772 - SH',  'S V 786 / O IV 787 - LW',
-        'S V 786 / O IV 787 - LW', 'N III 991 - SH', 'N III 991 - SH', 'O VI 1032 - Peak']
+    if list_file_amps_err[3] == 1: 
+        extent = [0, amps[0].shape[0]*4, 0, 1.1*amps[0].shape[1]]
+    if list_file_amps_err[3] == 2: 
+        extent = [0, amps[0].shape[0]*4, 0, 1.1*2*amps[0].shape[1]]
+    # keys = ['O III 703 / Mg IX 706 - SH', 'O III 703 / Mg IX 706 - SH','S IV 750/ Mg IX (spectral bin 2)', 'N IV 765 - Peak',
+    #     'Ne VIII 770 / Mg VIII 772 - SH',  'S V 786 / O IV 787 - LW',
+    #     'S V 786 / O IV 787 - LW', 'N III 991 - SH', 'N III 991 - SH', 'O VI 1032 - Peak']
 
-    ions = ['O III', 'Mg IX', 'S IV', 'N IV', 'Ne VIII', 'S V', 'O IV', 'Na VI', 'N III', 'O VI']
-    wvl = [703, 706, 750, 765, 770, 786, 787, 988.6, 991, 1032]
+    # ions = ['O III', 'Mg IX', 'S IV', 'N IV', 'Ne VIII', 'S V', 'O IV', 'Na VI', 'N III', 'O VI']
+    # wvl = [703, 706, 750, 765, 770, 786, 787, 988.6, 991, 1032]
+    
+    keys = ['O III 703 / Mg IX 706 - SH', 'N IV 765 - Peak', 'Ne VIII 770 / Mg VIII 772 - SH', 'O VI 1032 - Peak']
+
+    ions = ['Mg IX', 'N IV', 'Ne VIII', 'O VI']
+    wvl = [706,  765, 770, 1032]    
     
     exposure = read_spice_l2_fits(file,memmap=False)
     
@@ -54,15 +65,17 @@ def DEM_abundance(list_file_amps_err):
     [trespsCorona, logtsCorona, exptimes] = contribution_func_spice('sun_coronal_2012_schmelz', ions, wvl)
     
     #Change any values that could cause a linalg Errors
-    defaultValue = 1
     tot_err_nonan = []
     tot_amp_nonan = []
+    
     for k in range(len(amps)):
-        B = np.nan_to_num( np.array(errors[k]), nan = 1, posinf=1000, neginf=0.1)
-        B[ B == 0] = defaultValue
+        B = np.nan_to_num( np.array(errors[k]), nan = np.nanmax(errors[k]),
+                          posinf=np.nanmax(errors[k]), neginf=np.nanmax(errors[k]))
+        B[ B == 0] = np.nanmax(errors[k])
         tot_err_nonan.append(B)
-        A = np.nan_to_num(np.array(amps[k]), nan = 1, posinf=1000, neginf=0.1)
-        A[ A == 0] = defaultValue
+        A = np.nan_to_num(np.array(amps[k]), nan = defVal,
+                          posinf=defVal, neginf=defVal)
+        A[ A == 0] = np.nanmin(amps[k])
         tot_amp_nonan.append(A)
     
     #Tranforming arrays into NDCube objects
@@ -88,14 +101,12 @@ def DEM_abundance(list_file_amps_err):
     coeffs,logts,bases,wcs,algorithm, chi2 = simple_reg_dem_wrapper(em_collection.data())
     demsequence = emtk.dem_model(coeffs,logts,bases,wcs,algorithm,simple_reg_dem_wrapper)
     em_collection.add_model(demsequence)
-    
-    demmax = 5.0e28
+
     gfac = 1.0/2.2
     
     #Plot the DEMs
     tempindx = [0,5,10,15,20,25]
-    #Extent using the CDELTA values in fits header
-    extent = [0, amps[0].shape[0]*4, 0, 1.1*amps[0].shape[1]]
+    
     fig = plt.figure(figsize=(20, 17), constrained_layout=True)
     grid = AxesGrid(fig, 111,
                     nrows_ncols=(2, 3),
@@ -129,9 +140,8 @@ def DEM_abundance(list_file_amps_err):
     list_chi2 =[]
     datasequences = []
     em_collections =[]
-    print(logtsCorona[0].shape)
     for i in mixed_tresps :
-        datasequences.append(emtk.em_data_spice(file, keys, amps, errors, logtsCorona, i))
+        datasequences.append(emtk.em_data_spice(file, keys, amps, errors, logtsCorona, i, defaultValue=defVal))
     for k in datasequences :    
         em_collections.append(emtk.em_collection(k))
     
@@ -150,11 +160,11 @@ def DEM_abundance(list_file_amps_err):
     gimg = np.ones(chi_mins_idx.shape)
     bimg = chi_mins_idx/20
     rimg = np.ones(chi_mins_idx.shape) - bimg
-    fig = plt.figure(figsize=(20, 10), tight_layout=True)
     
     for i in range(len(keys)):
+        plt.figure(figsize=(7,7), tight_layout=True)
         val = np.nanquantile(amps[i], 0.999) 
-        print('val quantile 0.95 : ', val)
+        #print('val quantile 0.95 : ', val)
         clrimg[:,:,0] = rimg*np.clip(amps[i], 0, val)/val
         clrimg[:,:,1] = gimg*np.clip(amps[i], 0, val)/val
         clrimg[:,:,2] = bimg*np.clip(amps[i], 0, val)/val
@@ -173,5 +183,4 @@ def DEM_abundance(list_file_amps_err):
     
     return chi_mins, chi_mins_idx
         
-        
-    
+
