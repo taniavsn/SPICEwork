@@ -4,8 +4,12 @@ Created on Mon Jun  6 09:53:09 2022
 
 @author: Tania Varesano
 """
+## Unpack the json lists of fitting containing amplitudes, errors, and shifts.
+## The 3 arguments of the function should be the names of the json files (with file extension)
+## return the arrays of amplitudes, errors, and shifts for the 3 mosaic files for the ions :
+# ['O III', 'Mg IX', 'S IV', 'N IV', 'Ne VIII', 'S V', 'O IV', 'Na VI', 'N III', 'O VI']
 
-def unpack_json_fits(file82, file86, file90) :
+def unpack_json_fits(file82 = 'total_fit_82_adu.json', file86 = 'total_fit_86_adu.json', file90 = 'total_fit_90_adu.json') :
     import pickle
     with open(file82, 'rb') as f:
       multifit82adu = pickle.load(f)
