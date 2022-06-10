@@ -19,16 +19,20 @@ def em_data_spice(file, keys, amps, errs, logts, tresps, channels=None, defaultV
     #get rid of any values that could cause a LinAlg error
     tot_err_nonan = []
     tot_amp_nonan = []
+    rad_fac = 4*(180*3600)**2/0.1 
     for k in range(len(amps)):
         B = np.nan_to_num( np.array(errs[k]), nan = np.nanmax(errs[k]),
                           posinf=np.nanmax(errs[k]), neginf=np.nanmax(errs[k]))
         B[ B == 0] = np.nanmax(errs[k])
-        tot_err_nonan.append(B)
+        B *= rad_fac
+        tot_err_nonan.append(B) #convert nm to cm
         A = np.nan_to_num(np.array(amps[k]), nan = defaultValue, posinf=defaultValue,
                           neginf=defaultValue)
-        A[ A == 0] = np.min(amps[k])
-        tot_amp_nonan.append(A)
-   
+        A[ A == 0] = defaultValue
+        A *= rad_fac
+        print(np.median(A))
+        tot_amp_nonan.append(A*rad_fac)
+
     amps = tot_amp_nonan
     errs = tot_err_nonan
     

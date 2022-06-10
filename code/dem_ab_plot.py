@@ -67,15 +67,22 @@ def DEM_abundance(list_file_amps_err, defVal=0.01):
     #Change any values that could cause a linalg Errors
     tot_err_nonan = []
     tot_amp_nonan = []
-    
+    ##emissivity*size of px on the sun * attenuation solar distance * effective area SPICE * radiometric conversion
+    rad_fac = 4*(180*3600)**2/0.1  
     for k in range(len(amps)):
+        print('Before factor amps : ',np.mean(amps[k]))
+        amps[k] = amps[k]*rad_fac
+        print(np.mean(amps[k]))
+        print('Before factor errs : ',np.mean(errors[k]))
+        errors[k] = errors[k]*rad_fac
+        print(np.mean(errors[k]))
         B = np.nan_to_num( np.array(errors[k]), nan = np.nanmax(errors[k]),
                           posinf=np.nanmax(errors[k]), neginf=np.nanmax(errors[k]))
         B[ B == 0] = np.nanmax(errors[k])
         tot_err_nonan.append(B)
         A = np.nan_to_num(np.array(amps[k]), nan = defVal,
                           posinf=defVal, neginf=defVal)
-        A[ A == 0] = np.nanmin(amps[k])
+        A[ A == 0] = defVal
         tot_amp_nonan.append(A)
     
     #Tranforming arrays into NDCube objects
@@ -112,7 +119,7 @@ def DEM_abundance(list_file_amps_err, defVal=0.01):
                     nrows_ncols=(2, 3),
                     axes_pad=0.9,
                     cbar_mode='each',
-                    cbar_location='bottom',
+                    cbar_location='right',
                     cbar_pad=0.3)
     
     for i in range(6):

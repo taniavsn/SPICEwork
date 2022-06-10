@@ -2,7 +2,7 @@
 """
 Created on Sun May 29 14:10:48 2022
 
-@author: tania
+@author: Tania Varesano
 """
 import os.path
 import numpy as np
@@ -30,11 +30,8 @@ from specutils.spectra import Spectrum1D
 from mpl_toolkits.axes_grid1 import AxesGrid
 plt.rcParams['image.origin'] = 'lower'
 plt.rcParams.update({'font.size': 16}) # Make the fonts in figures big enough for papers
-plt.rcParams.update({'figure.figsize':[15,7]});
-
-from astropy import constants as const 
+plt.rcParams.update({'figure.figsize':[15,7]}); 
 from multiprocessing import Pool
-import time
 plt.rc('font', family='serif')
 
 
@@ -71,8 +68,9 @@ def fit_lines_mosaic2nd(key):
     #Setting constants
     pxsz_mu = 18
     platescale_x = pxsz_mu/1.1 # Micron per arcsecond
-    #platescale_y = pxsz_mu/1.1 # Micron per arcsecond
     platescale_l = pxsz_mu/0.09 # Micron per Angstrom
+    
+    #center of the window
     wl0 = (raster.meta.original_header['CRVAL3']-raster.meta.original_header['CDELT3']*raster.meta.original_header['CRPIX3'])*10
     det_scale0 = bin_facs*np.array([raster.meta.original_header['CDELT1']*platescale_x,
                                 raster.meta.original_header['CDELT2']*pxsz_mu,10*raster.meta.original_header['CDELT3']*platescale_l])
@@ -91,7 +89,9 @@ def fit_lines_mosaic2nd(key):
     cube = substract_min_cube(cube)
     
     det_dims0 = np.array(cube.shape)
+    #array of the measure points
     waves = (det_origin0[2]+np.arange(det_dims0[2])*det_scale0[2])/platescale_l
+    #center wvl of the ion of interest
     wcen0 = waves[np.nanargmax(np.nansum(np.nansum(cube,axis=0),axis=0))]
     
     cube = bindown(cube,np.round(np.array(cube.shape)/bin_facs).astype(np.int32))
@@ -122,19 +122,13 @@ def fit_lines_mosaic2nd(key):
         fit_ampsMgIX, fit_cenMgIX, fit_errMgIX = np.zeros([nx,ny]), np.zeros([nx,ny]), np.zeros([nx,ny])
         for i in tqdm.tqdm(range(0,nx)):
             for j in range(0,ny):
-                data = cube[i, j, :]*u.adu      
+                data = cube[i, j, :]*(u.W/u.m**2/u.sr/u.Angstrom)*10       
                 errs = errors[i, j, :]
                 mask = dat_mask[i, j, :]
-                data[mask] = 0.0*u.adu
+                data[mask] = 0.0*(u.W/u.m**2/u.sr/u.Angstrom)*10
                 if(np.sum(np.logical_not(mask)) > 10):        
                     dat = data[np.logical_not(mask)].value
                     wvl =  waves[np.logical_not(mask)]*u.Angstrom
-                    cont = np.min(dat)
-                    wav_norm = np.trapz(dat-cont,x=wvl)
-                    #amplitude, center and sigma guesses 
-                    amp = np.max(dat)-cont #np.trapz(dat-cont,x=wvl)
-                    cen = np.clip(np.trapz(wvl*(dat-cont),x=wvl)/wav_norm,cen0-sig0,cen0+sig0)
-                    sig =np.clip((np.trapz(wvl**2*(dat-cont),x=wvl)/wav_norm-cen**2),(0.25*sig0)**2,(2.5*sig0)**2)**0.5
     
                     spec = Spectrum1D(flux = data, spectral_axis = waves*u.Angstrom, uncertainty=StdDevUncertainty(errs), mask=mask)
                     
@@ -151,10 +145,9 @@ def fit_lines_mosaic2nd(key):
                                             bounds={'amplitude':[np.min(dat),np.max(dat)]})
 
                     g_fit = fit_lines(spec, g_init + g_init1 + g_init2 + c_init)
-                    y_fit = g_fit(wvl)
-
-                    fit_ampsOIII[i][j] = g_fit.amplitude_1.value
-                    fit_ampsMgIX[i][j] = g_fit.amplitude_2.value
+                    ## Compute the radiance (area) instead of just getting the maximum amplitude
+                    fit_ampsOIII[i][j] = g_fit.amplitude_1.value*np.sqrt(np.pi/2)*g_fit.stddev_1.value
+                    fit_ampsMgIX[i][j] = g_fit.amplitude_2.value*np.sqrt(np.pi/2)*g_fit.stddev_2.value
 
                     fit_cenOIII[i][j] = 703.85- g_fit.mean_1.value #O III
                     fit_cenMgIX[i][j] = 706 - g_fit.mean_2.value # Mg IX
@@ -175,19 +168,13 @@ def fit_lines_mosaic2nd(key):
         fit_ampsSIV750, fit_cenSIV750, fit_errSIV750 = np.zeros([nx,ny]), np.zeros([nx,ny]), np.zeros([nx,ny])
         for i in tqdm.tqdm(range(0,nx)):
             for j in range(0,ny):
-                data = cube[i, j, :]*u.adu
+                data = cube[i, j, :]*(u.W/u.m**2/u.sr/u.Angstrom)*10
                 errs = errors[i, j, :]
                 mask = dat_mask[i, j, :]
-                data[mask] = 0.0*u.adu
+                data[mask] = 0.0*(u.W/u.m**2/u.sr/u.Angstrom)*10
                 if(np.sum(np.logical_not(mask)) > 10):        
                     dat = data[np.logical_not(mask)].value
                     wvl =  waves[np.logical_not(mask)]*u.Angstrom
-                    cont = np.min(dat)
-                    wav_norm = np.trapz(dat-cont,x=wvl)
-                    #amplitude, center and sigma guesses 
-                    amp = np.max(dat)-cont #np.trapz(dat-cont,x=wvl)
-                    cen = np.clip(np.trapz(wvl*(dat-cont),x=wvl)/wav_norm,cen0-sig0,cen0+sig0)
-                    sig =np.clip((np.trapz(wvl**2*(dat-cont),x=wvl)/wav_norm-cen**2),(0.25*sig0)**2,(2.5*sig0)**2)**0.5
     
                     spec = Spectrum1D(flux = data, spectral_axis = waves*u.Angstrom, uncertainty=StdDevUncertainty(errs), mask=mask)
                     
@@ -202,7 +189,7 @@ def fit_lines_mosaic2nd(key):
 
                     g_fit = fit_lines(spec, g_init + g_init1 + c_init)
 
-                    fit_ampsSIV750[i][j] = g_fit.amplitude_1.value
+                    fit_ampsSIV750[i][j] = g_fit.amplitude_1.value*np.sqrt(np.pi/2)*g_fit.stddev_1.value
                     fit_cenSIV750[i][j] = 750.221 - g_fit.mean_1.value  #S IV
                     fit_errSIV750[i][j] = np.abs((g_fit.amplitude_0.value/np.nansum(data[mask==0].value))*
                                            np.sqrt(np.nansum((errs[mask==0])**2)))
@@ -216,10 +203,10 @@ def fit_lines_mosaic2nd(key):
         fit_ampsNIV, fit_cenNIV, fit_errNIV = np.zeros([nx,ny]), np.zeros([nx,ny]), np.zeros([nx,ny])
         for i in tqdm.tqdm(range(0,nx)):
             for j in range(0,ny):
-                data = cube[i, j, :]*u.adu
+                data = cube[i, j, :]*(u.W/u.m**2/u.sr/u.Angstrom)*10
                 errs = errors[i, j, :]
                 mask = dat_mask[i, j, :]
-                data[mask] = 0.0*u.adu
+                data[mask] = 0.0*(u.W/u.m**2/u.sr/u.Angstrom)*10
                 if(np.sum(np.logical_not(mask)) > 10):        
                     dat = data[np.logical_not(mask)].value
                     wvl =  waves[np.logical_not(mask)]*u.Angstrom
@@ -242,7 +229,7 @@ def fit_lines_mosaic2nd(key):
 
                     g_fit = fit_lines(spec, g_init + c_init)
                     #y_fit = g_fit(wvl)
-                    fit_ampsNIV[i][j] = g_fit.amplitude_0.value
+                    fit_ampsNIV[i][j] = g_fit.amplitude_0.value*np.sqrt(np.pi/2)*g_fit.stddev_0.value
                     fit_errNIV[i][j] = np.abs((g_fit.amplitude_0.value/np.nansum(data[mask==0].value))*np.sqrt(np.nansum((errs[mask==0])**2)))
                     fit_cenNIV[i][j] = 765 - g_fit.mean_0.value
                     
@@ -256,10 +243,10 @@ def fit_lines_mosaic2nd(key):
         fit_ampsNe, fit_cenNe, fit_errNe = np.zeros([nx,ny]), np.zeros([nx,ny]), np.zeros([nx,ny])
         for i in tqdm.tqdm(range(0,nx)):
             for j in range(0,ny):
-                data = cube[i, j, :]*u.adu
+                data = cube[i, j, :]*(u.W/u.m**2/u.sr/u.Angstrom)*10
                 errs = errors[i, j, :]
                 mask = dat_mask[i, j, :]
-                data[mask] = 0.0*u.adu
+                data[mask] = 0.0*(u.W/u.m**2/u.sr/u.Angstrom)*10
                 if(np.sum(np.logical_not(mask)) > 10):        
                     dat = data[np.logical_not(mask)].value
                     wvl =  waves[np.logical_not(mask)]*u.Angstrom
@@ -281,7 +268,7 @@ def fit_lines_mosaic2nd(key):
                                                 bounds={'amplitude':[np.min(dat),np.max(dat)]})
 
                     g_fit = fit_lines(spec, g_init + c_init)
-                    fit_ampsNe[i][j] = g_fit.amplitude_0.value
+                    fit_ampsNe[i][j] = g_fit.amplitude_0.value*np.sqrt(np.pi/2)*g_fit.stddev_0.value
                     fit_errNe[i][j] = np.abs((g_fit.amplitude_0.value/np.nansum(data[mask==0].value))*np.sqrt(np.nansum((errs[mask==0])**2)))
                     fit_cenNe[i][j] = 770 - g_fit.mean_0.value
                     
@@ -295,19 +282,13 @@ def fit_lines_mosaic2nd(key):
         fit_ampsSV, fit_cenSV, fit_errSV = np.zeros([nx,ny]), np.zeros([nx,ny]), np.zeros([nx,ny])
         for i in tqdm.tqdm(range(0,nx)):
             for j in range(0,ny):
-                data = cube[i, j, :]*u.adu
+                data = cube[i, j, :]*(u.W/u.m**2/u.sr/u.Angstrom)*10
                 errs = errors[i, j, :]
                 mask = dat_mask[i, j, :]
-                data[mask] = 0.0*u.adu
+                data[mask] = 0.0*(u.W/u.m**2/u.sr/u.Angstrom)*10
                 if(np.sum(np.logical_not(mask)) > 10):        
                     dat = data[np.logical_not(mask)].value
                     wvl =  waves[np.logical_not(mask)]*u.Angstrom
-                    cont = np.min(dat)
-                    wav_norm = np.trapz(dat-cont,x=wvl)
-                    #amplitude, center and sigma guesses 
-                    amp = np.max(dat)-cont #np.trapz(dat-cont,x=wvl)
-                    cen = np.clip(np.trapz(wvl*(dat-cont),x=wvl)/wav_norm,cen0-sig0,cen0+sig0)
-                    sig =np.clip((np.trapz(wvl**2*(dat-cont),x=wvl)/wav_norm-cen**2),(0.25*sig0)**2,(2.5*sig0)**2)**0.5
     
                     spec = Spectrum1D(flux = data, spectral_axis = waves*u.Angstrom, uncertainty=StdDevUncertainty(errs), mask=mask)
                     sub_region = SpectralRegion(min(wvl), 787*u.Angstrom)
@@ -322,8 +303,8 @@ def fit_lines_mosaic2nd(key):
 
                     g_fit = fit_lines(spec, g_init + g_init1 + c_init)
                     #y_fit = g_fit(wvl)                           
-                    fit_ampsSV[i][j] = g_fit.amplitude_0.value
-                    fit_ampsOIV[i][j] = g_fit.amplitude_1.value
+                    fit_ampsSV[i][j] = g_fit.amplitude_0.value*np.sqrt(np.pi/2)*g_fit.stddev_0.value
+                    fit_ampsOIV[i][j] = g_fit.amplitude_1.value*np.sqrt(np.pi/2)*g_fit.stddev_1.value
 
                     fit_cenSV[i][j] = 786.47 - g_fit.mean_0.value  # S V 786
                     fit_cenOIV[i][j] = 787.71 - g_fit.mean_1.value #O IV 787
@@ -345,19 +326,13 @@ def fit_lines_mosaic2nd(key):
         fit_ampsNIII, fit_cenNIII, fit_errNIII = np.zeros([nx,ny]), np.zeros([nx,ny]), np.zeros([nx,ny])
         for i in tqdm.tqdm(range(0,nx)):
             for j in range(0,ny):
-                data = cube[i, j, :]*u.adu
+                data = cube[i, j, :]*(u.W/u.m**2/u.sr/u.Angstrom)*10
                 errs = errors[i, j, :]
                 mask = dat_mask[i, j, :]
-                data[mask] = 0.0*u.adu
+                data[mask] = 0.0*(u.W/u.m**2/u.sr/u.Angstrom)*10
                 if(np.sum(np.logical_not(mask)) > 10):        
                     dat = data[np.logical_not(mask)].value
                     wvl =  waves[np.logical_not(mask)]*u.Angstrom
-                    cont = np.min(dat)
-                    wav_norm = np.trapz(dat-cont,x=wvl)
-                    #amplitude, center and sigma guesses 
-                    amp = np.max(dat)-cont #np.trapz(dat-cont,x=wvl)
-                    cen = np.clip(np.trapz(wvl*(dat-cont),x=wvl)/wav_norm,cen0-sig0,cen0+sig0)
-                    sig =np.clip((np.trapz(wvl**2*(dat-cont),x=wvl)/wav_norm-cen**2),(0.25*sig0)**2,(2.5*sig0)**2)**0.5
     
                     spec = Spectrum1D(flux = data, spectral_axis = waves*u.Angstrom, uncertainty=StdDevUncertainty(errs), mask=mask) 
                     sub_region = SpectralRegion(min(wvl), 989*u.Angstrom)
@@ -374,8 +349,8 @@ def fit_lines_mosaic2nd(key):
 
                     g_fit = fit_lines(spec, g_init + g_init1 + g_init2 + c_init)
 
-                    fit_ampsNa[i][j] = g_fit.amplitude_0.value
-                    fit_ampsNIII[i][j] = g_fit.amplitude_2.value
+                    fit_ampsNa[i][j] = g_fit.amplitude_0.value*np.sqrt(np.pi/2)*g_fit.stddev_0.value
+                    fit_ampsNIII[i][j] = g_fit.amplitude_2.value*np.sqrt(np.pi/2)*g_fit.stddev_2.value
                     fit_cenNa[i][j] = 988.6 - g_fit.mean_0.value  #Na VI 2s2 2p2 3P2 - 2s 2p3 5S2 
                     fit_cenNIII[i][j] = 991.51 - g_fit.mean_2.value # N III 2s2 2p 2P3/2 - 2s 2p2 2 D3-5/2 (2 lines) 
                     fit_errNa[i][j] = np.abs((g_fit.amplitude_0.value/np.nansum(data[mask==0].value))*
@@ -395,10 +370,10 @@ def fit_lines_mosaic2nd(key):
         fit_ampsOVI, fit_cenOVI, fit_errOVI = np.zeros([nx,ny]), np.zeros([nx,ny]), np.zeros([nx,ny])
         for i in tqdm.tqdm(range(0,nx)):
             for j in range(0,ny):
-                data = cube[i, j, :]*u.adu
+                data = cube[i, j, :]*(u.W/u.m**2/u.sr/u.Angstrom)*10
                 errs = errors[i, j, :]
                 mask = dat_mask[i, j, :]
-                data[mask] = 0.0*u.adu
+                data[mask] = 0.0*(u.W/u.m**2/u.sr/u.Angstrom)*10
                 if(np.sum(np.logical_not(mask)) > 10):        
                     dat = data[np.logical_not(mask)].value
                     wvl =  waves[np.logical_not(mask)]*u.Angstrom
@@ -421,7 +396,7 @@ def fit_lines_mosaic2nd(key):
 
                     g_fit = fit_lines(spec, g_init + c_init)
                     #y_fit = g_fit(wvl)
-                    fit_ampsOVI[i][j] = g_fit.amplitude_0.value
+                    fit_ampsOVI[i][j] = g_fit.amplitude_0.value*np.sqrt(np.pi/2)*g_fit.stddev_0.value
                     fit_errOVI[i][j] = np.abs((g_fit.amplitude_0.value/np.nansum(data[mask==0].value))*np.sqrt(np.nansum((errs[mask==0])**2)))
                     fit_cenOVI[i][j] = 1032 - g_fit.mean_0.value
                     
@@ -437,6 +412,6 @@ keys = ['O III 703 / Mg IX 706 - SH', 'S IV 750/ Mg IX (spectral bin 2)', 'N IV 
 if __name__ == "__main__":
     res = tqdm.contrib.concurrent.process_map(fit_lines_mosaic2nd, keys)
    
-    totfitfile = 'total_fit_86_adu.json'
+    totfitfile = 'total_fit_86.json'
     with open(totfitfile, 'wb') as famps:
         pickle.dump(res, famps)  
